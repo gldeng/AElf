@@ -17,4 +17,7 @@
   <ItemGroup>
     <Compile Remove="TransactionTests.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Assembly" />
+  </ItemGroup>
 </Project>
