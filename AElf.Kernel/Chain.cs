@@ -59,6 +59,7 @@ namespace AElf.Kernel
             {
                 var smartContractZero = new SmartContractZero();
                 AccountZero = new AccountZero(smartContractZero);
+                _worldState.AddAccountDataProvider(AccountZero);
                 var accountZeroDataProvider = _worldState.GetAccountDataProviderByAccount(AccountZero);
                 const string smartContractMapKey = "SmartContractMap";
                 accountZeroDataProvider.GetDataProvider().SetDataProvider(smartContractMapKey, new DataProvider(AccountZero, _worldState));

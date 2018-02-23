@@ -127,7 +127,6 @@ namespace AElf.Kernel
         /// <returns></returns>
         private async Task CreateAccount(IAccount accountFrom, string contractName)
         {
-            
             // get the contract regiseter from dataProvider
             var accountZeroDataProvider = _worldState.GetAccountDataProviderByAccount(_accountZero);
             var smartContractRegistration = (SmartContractRegistration) accountZeroDataProvider.GetDataProvider()
