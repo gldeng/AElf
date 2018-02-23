@@ -79,11 +79,12 @@ namespace AElf.Kernel.Tests
             var worldState = new WorldState();
             var address = new Hash<IAccount>("aelf".CalculateHash());
             var account = new Account(address);
-            var accountDataProvider = new AccountDataProvider(account, worldState);
-            var dataprovider = accountDataProvider.GetDataProvider();
             
             //Add a data provider to world state merkle tree.
             worldState.AddAccountDataProvider(account);
+            
+            var accountDataProvider = worldState.GetAccountDataProviderByAccount(account);
+            var dataprovider = accountDataProvider.GetDataProvider();
             
             //Merkle tree root hash before set:
             var merkleHashBefore = worldState.GetWorldStateMerkleTreeRootAsync();
@@ -98,8 +99,11 @@ namespace AElf.Kernel.Tests
 
             //Merkle tree root hash after set:
             var merkleHashAfter = worldState.GetWorldStateMerkleTreeRootAsync();
+
+            var adp = worldState.GetAccountDataProviderByAccount(account);
+            var dp = adp.GetDataProvider();
             
-            var getData = dataprovider.GetAsync(hashKey).Result;
+            var getData = dp.GetAsync(hashKey).Result;
             
             //See if get the same data which set before.
             Assert.True(getData == obj);
