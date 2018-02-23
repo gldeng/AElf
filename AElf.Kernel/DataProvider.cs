@@ -22,6 +22,7 @@ namespace AElf.Kernel
         /// ctor.
         /// </summary>
         /// <param name="account"></param>
+        /// <param name="worldState"></param>
         public DataProvider(IAccount account, WorldState worldState)
         {
             _account = account;
@@ -97,6 +98,7 @@ namespace AElf.Kernel
         public void SetDataProvider(string name, IDataProvider dataProvider)
         {
             _dataProviders[name] = dataProvider;
+            _worldState.AddDataProvider(dataProvider);
         }
 
         /// <summary>
@@ -128,7 +130,9 @@ namespace AElf.Kernel
             
             _worldState.UpdateDataProvider(beforeSet, this);
 
-            return new Task(() => Database.Insert(finalHash, obj));
+            Database.Insert(finalHash, obj);
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -149,7 +153,7 @@ namespace AElf.Kernel
         /// </summary>
         public void Execute()
         {
-            if (_keyHash == default(IHash) || _newValueHash == default(IHash))
+            if (_keyHash == null || _newValueHash == null)
             {
                 return;
             }
