@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using AElf.Kernel.Concurrency.Execution.Messages;
 using AElf.Kernel.KernelAccount;
+using Akka.Event;
 using Akka.Routing;
 using Google.Protobuf;
 using Microsoft.AspNetCore.Server.Kestrel.Transport.Libuv.Internal.Networking;
@@ -26,7 +27,7 @@ namespace AElf.Kernel.Concurrency.Execution
             Running,
             Suspended // TODO: Support suspend
         }
-
+        private readonly ILoggingAdapter _log = Logging.GetLogger(Context);
         private State _state = State.PendingSetSericePack;
         private long _servingRequestId = -1;
 
@@ -86,6 +87,10 @@ namespace AElf.Kernel.Concurrency.Execution
                         Sender.Tell(new JobExecutionStatus(query.RequestId, JobExecutionStatus.RequestStatus.Running));
                     }
 
+                    break;
+                case DummyMessage m :
+                    _log.Info("Pong");
+                    Sender.Tell("Pong");
                     break;
             }
         }

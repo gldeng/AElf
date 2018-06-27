@@ -83,7 +83,20 @@ namespace AElf.Kernel.Concurrency.Execution
                         _requestIdToRouteeIndex.Add(req.RequestId, ind);
                         return routees[ind];
                     }
-
+                    else if (message is DummyMessage)
+                    {
+                        
+                        foreach (var r in routees)
+                        {
+                            Console.WriteLine(((ActorSelectionRoutee)r).Selection.Anchor.Path.Address);
+                        }
+                        if (routees.Length > 0)
+                        {
+                            Console.WriteLine(routees.Length);    
+                            return routees[new Random().Next() % routees.Length];    
+                        }
+                    }
+                    
                     return Routee.NoRoutee;
                 }
             );
