@@ -55,7 +55,8 @@ public partial class ExternalEnvironment : IExternalEnvironment, ITransientDepen
 
     public bool IsContract(byte[] address)
     {
-        throw new NotImplementedException();
+        var result = _contractReader.GetContractHashAsync(Caller, Types.Address.FromBytes(address));
+        return result.Result.Length() > 0;
     }
 
     public Hash? CodeHash(byte[] address)
