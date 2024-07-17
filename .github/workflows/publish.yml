@@ -1,0 +1,50 @@
+on:
+  push:
+    branches:
+      - preview/ci
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.*'  # Change this to the .NET version you're using
+
+      - name: Install protoc
+        run: |
+          wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protoc-3.11.4-linux-x86_64.zip
+          unzip protoc-3.11.4-linux-x86_64.zip -d protoc3
+          sudo mv protoc3/bin/* /usr/local/bin/
+          sudo mv protoc3/include/* /usr/local/include/
+
+      - name: Install contract_plugin binary
+        run: |
+          bash scripts/download_binary.sh
+
+      - name: Read version from version.props
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/preview" ]]; then
+            version=$(grep -oP '<Version>\K[^<]+' common.props)
+            echo "VERSION=$version-preview.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          else
+            version=$(grep -oP '<Version>\K[^<]+' common.props)
+            echo "VERSION=$version" >> $GITHUB_ENV
+          fi
+
+      - name: Build project
+        run: dotnet build AElf.sln --configuration Release /p:Version=$VERSION /p:Platform="Any CPU"
+
+      - name: Pack
+        run: dotnet pack AElf.sln --configuration Release --output nupkgs /p:Version=$VERSION /p:Platform="Any CPU"
+
+      # - name: Publish NuGet packages
+      #   uses: dansiegel/publish-nuget@v1.2
+      #   with:
+      #     filename: '**/*.nupkg'
+      #     apiKey: ${{ secrets.PREVIEW_NUGET_API_KEY }}
+      #     feedUrl: ${{ secrets.PREVIEW_NUGET_FEED_URL }}
