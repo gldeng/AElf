@@ -383,6 +383,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkWasmVerifier", "contract\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkWasmVerifier.Tests", "test\ZkWasmVerifier.Tests\ZkWasmVerifier.Tests.csproj", "{8054502F-2594-4028-8109-A024DF7C82FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZkWasmGame", "contract\ZkWasmGame\ZkWasmGame.csproj", "{B859C137-D581-47B8-A588-B37673FAF000}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1101,6 +1103,10 @@ Global
 		{8054502F-2594-4028-8109-A024DF7C82FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8054502F-2594-4028-8109-A024DF7C82FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8054502F-2594-4028-8109-A024DF7C82FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B859C137-D581-47B8-A588-B37673FAF000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B859C137-D581-47B8-A588-B37673FAF000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B859C137-D581-47B8-A588-B37673FAF000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B859C137-D581-47B8-A588-B37673FAF000}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1294,5 +1300,6 @@ Global
 		{6981684D-450C-412B-9082-0B0A67A679B9} = {D3950CC9-808F-4ED8-946A-79A992F3F8EF}
 		{DD4B2603-902F-41FE-A85F-F952957FAFA3} = {9AA521A5-80BF-4D20-9339-31D7E86D5868}
 		{8054502F-2594-4028-8109-A024DF7C82FA} = {D3950CC9-808F-4ED8-946A-79A992F3F8EF}
+		{B859C137-D581-47B8-A588-B37673FAF000} = {9AA521A5-80BF-4D20-9339-31D7E86D5868}
 	EndGlobalSection
 EndGlobal
