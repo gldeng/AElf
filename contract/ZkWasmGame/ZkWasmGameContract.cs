@@ -67,7 +67,11 @@ public class ZkWasmGameContract : ZkWasmGameContainer.ZkWasmGameBase
             TotalSteps = instance.Value[2],
             CurrentPosition = instance.Value[3]
         };
-        Assert(startState.Equals(State.GameState.Value), "Invalid start state.");
+        Assert(startState.Equals(State.GameState.Value ?? new GameState()
+        {
+            TotalSteps = "0",
+            CurrentPosition = "0",
+        }), "Invalid start state.");
         State.GameState.Value = endState;
     }
 
