@@ -1,5 +1,4 @@
 using System;
-using Ed25519;
 
 namespace AElf.Sdk.CSharp;
 
