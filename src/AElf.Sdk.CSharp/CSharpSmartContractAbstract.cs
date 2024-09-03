@@ -1,4 +1,5 @@
 using AElf.Kernel.SmartContract;
+using AElf.Sdk.CSharp.Spec;
 using AElf.Types;
 
 namespace AElf.Sdk.CSharp;
@@ -10,6 +11,8 @@ public abstract class CSharpSmartContractAbstract : CSharpSmartContract
     ///     properties and methods useful for implementing the smart contracts action logic.
     /// </summary>
     public CSharpSmartContractContext Context { get; set; }
+
+    public IBuiltIns BuiltIns { get; internal set; }
 
     internal abstract TransactionExecutingStateSet GetChanges();
     internal abstract void Cleanup();

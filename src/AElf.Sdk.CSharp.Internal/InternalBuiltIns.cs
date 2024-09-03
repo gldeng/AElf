@@ -1,10 +1,11 @@
 using System;
+using AElf.Sdk.CSharp.Spec;
 
-namespace AElf.Sdk.CSharp;
+namespace AElf.Sdk.CSharp.Internal;
 
-public static class BuiltIns
+internal class InternalBuiltIns : IBuiltIns
 {
-    public static bool Ed25519Verify(byte[] signature, byte[] message, byte[] publicKey)
+    public bool Ed25519Verify(byte[] signature, byte[] message, byte[] publicKey)
     {
         try
         {
