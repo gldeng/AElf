@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
-using Bn254.Net;
-using Nethereum.Util;
+using AElf.Types;
 
 namespace ZkWasmVerifier;
 
@@ -14,40 +13,47 @@ public class NotOnCurveException : AssertionException
     }
 }
 
-public class AggregatorLib
+public static class AggregatorLib
 {
-    private const string PMod =
-        "21888242871839275222246405745257275088696311157297823662689037894645226208583";
-    public const string QMod =
-        "21888242871839275222246405745257275088548364400416034343698204186575808495617";
-
-    public static UInt256 HashInstances(UInt256[] absorbing)
+    private static BigIntValue PMod => new BigIntValue
     {
-        var hash = Sha3Keccack.Current.CalculateHash(absorbing.SelectMany(x => x.ToBigEndianBytes()).ToArray());
-        return hash.ToUInt256() % QMod;
-    }
+        Value =
+            "21888242871839275222246405745257275088696311157297823662689037894645226208583"
+    };
 
-    public static void CheckOnCurve(UInt256 x, UInt256 y)
+    public static BigIntValue QMod => new BigIntValue
+    {
+        Value = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+    };
+
+    // public static BigIntValue HashInstances(BigIntValue[] absorbing)
+    // {
+    //     var hash = Sha3Keccack.Current.CalculateHash(absorbing.SelectMany(x => x.ToBytes32()).ToArray());
+    //     return hash.ToBigIntValue() % QMod;
+    // }
+
+    public static void CheckOnCurve(BigIntValue x, BigIntValue y)
     {
         // y^2 = x^3 + 3
         if (x.IsZero()) return;
         if (y.IsZero()) return;
-        UInt256 l = y * y % PMod;
-        UInt256 r = x * x % PMod;
-        r = r * x % PMod;
-        r = (r + 3) % PMod;
+        BigIntValue l = (y * y).ModPow(1, PMod);
+        BigIntValue r = (x * x).ModPow(1, PMod);
+        r = (r * x).ModPow(1, PMod);
+        r = (r + 3).ModPow(1, PMod);
         if (l != r)
         {
             throw new NotOnCurveException("Not on curve");
         }
     }
 
-    private static (bool, UInt256 x, UInt256 y) TryMul(UInt256 x1, UInt256 y1, UInt256 s)
+    private static (bool, BigIntValue x, BigIntValue y) TryMul(this CSharpSmartContractContext ctx, BigIntValue x1,
+        BigIntValue y1, BigIntValue s)
     {
         try
         {
-            var (x, y) = Bn254.Net.Bn254.Mul(x1, y1, s);
-            return (true, x, y);
+            var (x, y) = ctx.Bn254G1Mul(x1.ToBytes32(), y1.ToBytes32(), s.ToBytes32());
+            return (true, BigIntValue.FromBigEndianBytes(x), BigIntValue.FromBigEndianBytes(y));
         }
         catch (Exception e)
         {
@@ -55,12 +61,15 @@ public class AggregatorLib
         }
     }
 
-    private static (bool, UInt256 x, UInt256 y) TryAdd(UInt256 x1, UInt256 y1, UInt256 x2, UInt256 y2)
+    private static (bool, BigIntValue x, BigIntValue y) TryAdd(this CSharpSmartContractContext ctx, BigIntValue x1,
+        BigIntValue y1, BigIntValue x2,
+        BigIntValue y2)
     {
         try
         {
-            var (x, y) = Bn254.Net.Bn254.Add(x1, y1, x2, y2);
-            return (true, x, y);
+            var (x, y) = ctx.Bn254G1Add(x1.ToBytes32(), y1.ToBytes32(), x2.ToBytes32(),
+                y2.ToBytes32());
+            return (true, BigIntValue.FromBigEndianBytes(x), BigIntValue.FromBigEndianBytes(y));
         }
         catch (Exception e)
         {
@@ -68,9 +77,9 @@ public class AggregatorLib
         }
     }
 
-    public static bool Pairing(UInt256[] input)
+    public static bool Pairing(this CSharpSmartContractContext ctx, BigIntValue[] input)
     {
-        var elements = new List<(UInt256, UInt256, UInt256, UInt256, UInt256, UInt256)>();
+        var elements = new List<(byte[], byte[], byte[], byte[], byte[], byte[])>();
         for (var i = 0; 6 * i < input.Length; i++)
         {
             var (x1, y1, x2, y2, x3, y3) = (
@@ -78,13 +87,14 @@ public class AggregatorLib
                 input[6 * i + 2], input[6 * i + 3],
                 input[6 * i + 4], input[6 * i + 5]
             );
-            elements.Add((x1, y1, x2, y2, x3, y3));
+            elements.Add((x1.ToBytes32(), y1.ToBytes32(), x2.ToBytes32(), y2.ToBytes32(),
+                x3.ToBytes32(), y3.ToBytes32()));
         }
 
-        return Bn254.Net.Bn254.Pairing(elements.ToArray());
+        return ctx.Pairing(elements.ToArray());
     }
 
-    public static void Msm(UInt256[] input, UInt256 offset, UInt256 count)
+    public static void Msm(this CSharpSmartContractContext ctx, BigIntValue[] input, int offset, int count)
     {
         if (count == 0)
         {
@@ -96,7 +106,7 @@ public class AggregatorLib
         var ret = false;
         var start = offset + count * 3 - 3;
         {
-            var (ret0, x, y) = TryMul(input[start], input[start + 1], input[start + 2]);
+            var (ret0, x, y) = ctx.TryMul(input[start], input[start + 1], input[start + 2]);
             ret = ret0;
             input[start] = x;
             input[start + 1] = y;
@@ -107,13 +117,13 @@ public class AggregatorLib
         {
             start -= 3;
             {
-                var (ret0, x, y) = TryMul(input[start], input[start + 1], input[start + 2]);
+                var (ret0, x, y) = ctx.TryMul(input[start], input[start + 1], input[start + 2]);
                 ret = ret0;
                 input[start + 1] = x;
                 input[start + 2] = y;
             }
             {
-                var (ret0, x, y) = TryAdd(input[start + 1], input[start + 2], input[start + 3], input[start + 4]);
+                var (ret0, x, y) = ctx.TryAdd(input[start + 1], input[start + 2], input[start + 3], input[start + 4]);
                 ret = ret0;
                 input[start] = x;
                 input[start + 1] = y;
@@ -121,29 +131,29 @@ public class AggregatorLib
         }
     }
 
-    public static void EccMul(UInt256[] input, UInt256 offset)
+    public static void EccMul(this CSharpSmartContractContext ctx, BigIntValue[] input, int offset)
     {
-        if (input[offset + 2] == 1)
+        if (input[offset + 2].Value == "1")
         {
             return;
         }
 
-        Msm(input, offset, 1);
+        ctx.Msm(input, offset, 1);
     }
 
-    public static void EccMulAdd(UInt256[] input, UInt256 offset)
+    public static void EccMulAdd(this CSharpSmartContractContext ctx, BigIntValue[] input, int offset)
     {
         var ret = false;
         var p1 = offset;
         var p2 = p1 + 2;
         {
-            var (ret0, x, y) = TryMul(input[p2], input[p2 + 1], input[p2 + 2]);
+            var (ret0, x, y) = ctx.TryMul(input[p2], input[p2 + 1], input[p2 + 2]);
             ret = ret0;
             input[p2] = x;
             input[p2 + 1] = y;
         }
         {
-            var (ret0, x, y) = TryAdd(input[p1], input[p1 + 1], input[p1 + 2], input[p1 + 3]);
+            var (ret0, x, y) = ctx.TryAdd(input[p1], input[p1 + 1], input[p1 + 2], input[p1 + 3]);
             ret = ret0;
             input[p1] = x;
             input[p1 + 1] = y;
@@ -183,15 +193,14 @@ public class AggregatorLib
     //     require(ret);
     // }
 
-    public static UInt256 FrPow(UInt256 a, UInt256 power)
+    public static BigIntValue FrPow(BigIntValue a, BigIntValue power)
     {
-        var result = Bn254.Net.Bn254.ModExp(a.ToBigEndianBytes(), power.ToBigEndianBytes(), QMod.DecToUInt256().ToBigEndianBytes());
-        return new UInt256(result);
+        return SafeMath.ModPow(a, power, QMod);
     }
 
-    public static UInt256 FrDiv(UInt256 a, UInt256 b, UInt256 aux)
+    public static BigIntValue FrDiv(BigIntValue a, BigIntValue b, BigIntValue aux)
     {
-        var r = b * aux % QMod.DecToUInt256();
+        var r = (b * aux).ModPow(1, QMod);
         if (a != r)
         {
             throw new AssertionException("div fail");
@@ -202,7 +211,7 @@ public class AggregatorLib
             throw new AssertionException("div zero");
         }
 
-        return aux % QMod.DecToUInt256();
+        return aux.ModPow(1, QMod);
     }
 
     // function fr_div(uint256 a, uint256 b, uint256 aux) internal pure returns (uint256) {

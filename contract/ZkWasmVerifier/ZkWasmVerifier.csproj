@@ -3,10 +3,11 @@
     <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>ZkWasmVerifier</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>An on-chain verifier for Zk-Wasm proof.</Description>
+        <RootNamespace>AElf.Contracts.ZkWasmVerifier</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -49,9 +50,9 @@
     </ItemGroup>
 
 
-    <ItemGroup>
-        <PackageReference Include="Bn254.Net" Version="0.1.0-preview.3" />
-        <PackageReference Include="Nethereum.Web3" Version="4.21.4" />
-    </ItemGroup>
+<!--    <ItemGroup>-->
+<!--        <PackageReference Include="Bn254.Net" Version="0.1.0-preview.3" />-->
+<!--        <PackageReference Include="Nethereum.Web3" Version="4.21.4" />-->
+<!--    </ItemGroup>-->
     
 </Project>

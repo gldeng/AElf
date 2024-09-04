@@ -1,49 +1,42 @@
-using System;
 using System.Linq;
+using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
-using Bn254.Net;
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using ZkWasmVerifier;
 
 namespace AElf.Contracts.ZkWasmVerifier
 {
-    public class ZkWasmVerifier : ZkWasmVerifierContainer.ZkWasmVerifierBase
+    public partial class ZkWasmVerifier : ZkWasmVerifierContainer.ZkWasmVerifierBase
     {
         public override Empty Verify(VerifyInput input)
         {
-            var steps = new Object[]
-            {
-                new AggregatorVerifierCoreStep1(),
-                new AggregatorVerifierCoreStep2(),
-                new AggregatorVerifierCoreStep3(),
-            };
-
-            var proof = input.Proof.Select(x => x.DecToUInt256()).ToArray();
-            var aux = input.Aux.Select(x => x.DecToUInt256()).ToArray().ToArray();
-            var verifyInstance = input.VerifyInstance.Select(x => x.DecToUInt256()).ToArray();
-            var targetInstance = input.TargetInstance.Select(x => x.Value.Select(y => y.DecToUInt256()).ToArray())
+            var proof = input.Proof.Select(x => (BigIntValue)x).ToArray();
+            var aux = input.Aux.Select(x => (BigIntValue)x).ToArray().ToArray();
+            var verifyInstance = input.VerifyInstance.Select(x => (BigIntValue)x).ToArray();
+            var targetInstance = input.TargetInstance.Select(x => x.Value.Select(y => (BigIntValue)y).ToArray())
                 .ToArray();
-            var buf = new UInt256[43];
+            var buf = new BigIntValue[43];
 
             var forCalulatingKeccakHash = targetInstance.SelectMany(x => x)
                 .Concat(verifyInstance).ToArray();
-            buf[2] = AggregatorLib.HashInstances(forCalulatingKeccakHash);
+            var hash = Context.Keccak256(forCalulatingKeccakHash.SelectMany(x => x.ToBytes32()).ToArray()); 
+            buf[2] = BigIntValue.FromBigEndianBytes(hash).ModPow(1, AggregatorLib.QMod);
 
-            UInt256[] verifyCircuitPairingBuf = new UInt256[12];
+            BigIntValue[] verifyCircuitPairingBuf = new BigIntValue[12];
             {
                 // step 1: calculate verify circuit instance commitment
-                AggregatorConfig.CalcVerifyCircuitLagrange(buf);
+                Context.CalcVerifyCircuitLagrange(buf);
 
                 // step 2: calculate challenge
                 // take transcript[0..102]
                 // calculate challenges and store them in buf[0..10]
-                AggregatorConfig.GetChallenges(proof, buf);
+                Context.GetChallenges(proof, buf);
 
                 // step 3: calculate verify circuit pair
-                foreach (var step in steps)
-                {
-                    buf = ((IAggregatorVerifierCoreStep)step).VerifyProof(proof, aux, buf);
-                }
+                buf = VerifyProofStep1(proof, aux, buf);
+                buf = VerifyProofStep2(proof, aux, buf);
+                buf = VerifyProofStep3(proof, aux, buf);
 
                 verifyCircuitPairingBuf[0] = buf[0];
                 verifyCircuitPairingBuf[1] = buf[1];
@@ -61,7 +54,7 @@ namespace AElf.Contracts.ZkWasmVerifier
             }
             var checked_ = false;
             AggregatorConfig.FillVerifyCircuitsG2(verifyCircuitPairingBuf);
-            checked_ = AggregatorLib.Pairing(verifyCircuitPairingBuf);
+            checked_ = Context.Pairing(verifyCircuitPairingBuf);
             if (!checked_)
             {
                 throw new AssertionException("pairing check failed");

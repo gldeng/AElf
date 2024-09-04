@@ -3,7 +3,7 @@
     <Import Project="..\..\common.props"/>
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>ZkWasmGame</PackageId>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>An on-chain Game contract working with Zk-Wasm.</Description>
