@@ -91,7 +91,7 @@ public static class AggregatorLib
                 x3.ToBytes32(), y3.ToBytes32()));
         }
 
-        return ctx.Pairing(elements.ToArray());
+        return ctx.Bn254Pairing(elements.ToArray());
     }
 
     public static void Msm(this CSharpSmartContractContext ctx, BigIntValue[] input, int offset, int count)
