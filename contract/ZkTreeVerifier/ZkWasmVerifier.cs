@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -10,7 +11,7 @@ namespace AElf.Contracts.ZkTreeVerifier
         public G2Point beta2;
         public G2Point gamma2;
         public G2Point delta2;
-        public G1Point[] IC;
+        public List<G1Point> IC;
     }
 
     public class ZkTreeVerifier : ZkTreeVerifierContainer.ZkTreeVerifierBase
@@ -57,7 +58,7 @@ namespace AElf.Contracts.ZkTreeVerifier
             var snarkScalarField = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
                 .ToBigIntValue();
             var vk = VerifyingKey();
-            Assert(input.Length + 1 == vk.IC.Length, "verifier-bad-input");
+            Assert(input.Length + 1 == vk.IC.Count, "verifier-bad-input");
             // Compute the linear combination vk_x
             var vkX = new G1Point
             {
@@ -104,7 +105,7 @@ namespace AElf.Contracts.ZkTreeVerifier
                     "10857046999023057135944570762232829481370756359578518086990519993285655852781",
                     "4082367875863433681332203403145435568316851327593401208105741076214120093531",
                     "8495653923123431417604973247489272438418190587263600148770280649306958101930"),
-                IC = new G1Point[3]
+                IC = new List<G1Point>()
                 {
                     MakeG1("907082046166848403662755682318758048763333219052759262226888852664247719678",
                         "13772868673976322661276556815121724196712611456125880819435532265591384929117"),

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
@@ -6,8 +8,6 @@ using AElf.Types;
 // ReSharper disable TooManyArguments
 
 namespace AElf.Contracts.ZkTreeVerifier;
-
-using PairingInput = (byte[], byte[], byte[], byte[], byte[], byte[]);
 
 public class Proof
 {
@@ -94,10 +94,10 @@ public static class PairingLib
     internal static G1Point Addition(this CSharpSmartContractContext ctx, G1Point p1, G1Point p2)
     {
         var (x, y) = ctx.Bn254G1Add(
-            p1.X.ToBigEndianBytes(),
-            p1.Y.ToBigEndianBytes(),
-            p2.X.ToBigEndianBytes(),
-            p2.Y.ToBigEndianBytes()
+            p1.X.ToBytes32(),
+            p1.Y.ToBytes32(),
+            p2.X.ToBytes32(),
+            p2.Y.ToBytes32()
         );
         return new G1Point()
         {
@@ -109,9 +109,9 @@ public static class PairingLib
     internal static G1Point ScalarMul(this CSharpSmartContractContext ctx, G1Point p, BigIntValue scalar)
     {
         var (x, y) = ctx.Bn254G1Mul(
-            p.X.ToBigEndianBytes(),
-            p.Y.ToBigEndianBytes(),
-            scalar.ToBigEndianBytes()
+            p.X.ToBytes32(),
+            p.Y.ToBytes32(),
+            scalar.ToBytes32()
         );
         return new G1Point()
         {
@@ -120,28 +120,21 @@ public static class PairingLib
         };
     }
 
-    internal static bool Pairing(this CSharpSmartContractContext ctx, G1Point[] p1, G2Point[] p2)
+    internal static bool Pairing(this CSharpSmartContractContext ctx, List<G1Point> p1, List<G2Point> p2)
     {
-        if (p1.Length != p2.Length)
+        if (p1.Count != p2.Count)
         {
             throw new AssertionException("pairing-lengths-failed");
         }
 
-        var elements = p1.Length;
-        var input = new PairingInput[elements];
-        for (var i = 0; i < elements; i++)
-        {
-            input[i] = (
-                p1[i].X.ToBigEndianBytes(),
-                p1[i].Y.ToBigEndianBytes(),
-                p2[i].X.A.ToBigEndianBytes(),
-                p2[i].X.B.ToBigEndianBytes(),
-                p2[i].Y.A.ToBigEndianBytes(),
-                p2[i].Y.B.ToBigEndianBytes()
-            );
-        }
+        var success = ctx.Bn254Pairing(p1.Zip(p2).Select(p =>
+            (
+                p.First.X.ToBytes32(), p.First.Y.ToBytes32(),
+                p.Second.X.A.ToBytes32(), p.Second.X.B.ToBytes32(),
+                p.Second.Y.A.ToBytes32(), p.Second.Y.B.ToBytes32()
+            )
+        ).ToArray());
 
-        var success = ctx.Bn254Pairing(input);
         if (!success)
         {
             throw new AssertionException("pairing-check-failed");
@@ -154,10 +147,10 @@ public static class PairingLib
         G1Point a1, G2Point a2,
         G1Point b1, G2Point b2)
     {
-        return ctx.Pairing(new[]
+        return ctx.Pairing(new List<G1Point>()
         {
             a1, b1
-        }, new[]
+        }, new List<G2Point>()
         {
             a2, b2
         });
@@ -168,10 +161,10 @@ public static class PairingLib
         G1Point b1, G2Point b2,
         G1Point c1, G2Point c2)
     {
-        return ctx.Pairing(new[]
+        return ctx.Pairing(new List<G1Point>()
         {
             a1, b1, c1
-        }, new[]
+        }, new List<G2Point>()
         {
             a2, b2, c2
         });
@@ -183,12 +176,24 @@ public static class PairingLib
         G1Point c1, G2Point c2,
         G1Point d1, G2Point d2)
     {
-        return ctx.Pairing(new[]
+        return ctx.Pairing(new List<G1Point>()
         {
             a1, b1, c1, d1
-        }, new[]
+        }, new List<G2Point>()
         {
             a2, b2, c2, d2
         });
+    }
+
+    public static byte[] ToBytes32(this BigIntValue value)
+    {
+        var bytes = value.ToBigEndianBytes();
+        var newArray = new byte[32];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            newArray[31 - i] = bytes[bytes.Length - 1 - i];
+        }
+
+        return newArray;
     }
 }

@@ -1,5 +1,5 @@
 using System.IO;
-using AElf.Contracts.ZkTreeVerifier;
+using AElf.Contracts.ZkWasmVerifier;
 using AElf.Cryptography.ECDSA;
 using AElf.Kernel;
 using AElf.Standards.ACS0;
@@ -7,16 +7,16 @@ using AElf.Types;
 using Google.Protobuf;
 using Volo.Abp.Threading;
 
-namespace AElf.Contracts.ZkWasmVerifier;
+namespace AElf.Contracts.ZkTreeVerifier;
 
 public class ZkTreeVerifierTestBase : ContractTestKit.ContractTestBase<ZkTreeVerifierTestAElfModule>
 {
     protected ECKeyPair DefaultKeyPair => Accounts[0].KeyPair;
     protected Address DefaultAddress => Accounts[0].Address;
     internal ACS0Container.ACS0Stub ZeroContractStub { get; set; }
-    protected Address ZkWasmVerifierContractAddress { get; set; }
+    protected Address ZkTreeVerifierContractAddress { get; set; }
 
-    internal ZkTreeVerifierContainer.ZkTreeVerifierStub ZkWasmVerifierStub { get; set; }
+    internal ZkTreeVerifierContainer.ZkTreeVerifierStub ZkTreeVerifierStub { get; set; }
 
     protected ZkTreeVerifierTestBase()
     {
@@ -29,21 +29,21 @@ public class ZkTreeVerifierTestBase : ContractTestKit.ContractTestBase<ZkTreeVer
             {
                 Category = KernelConstants.CodeCoverageRunnerCategory,
                 Code = ByteString.CopyFrom(
-                    File.ReadAllBytes(typeof(ZkTreeVerifier.ZkTreeVerifier).Assembly.Location)),
+                    File.ReadAllBytes(typeof(Contracts.ZkTreeVerifier.ZkTreeVerifier).Assembly.Location)),
                 ContractOperation = new ContractOperation
                 {
                     Deployer = DefaultAddress
                 }
             }));
 
-        ZkWasmVerifierContractAddress = Address.Parser.ParseFrom(result.TransactionResult.ReturnValue);
-        ZkWasmVerifierStub = GetZkWasmVerifierTester(DefaultKeyPair);
+        ZkTreeVerifierContractAddress = Address.Parser.ParseFrom(result.TransactionResult.ReturnValue);
+        ZkTreeVerifierStub = GetZkWasmVerifierTester(DefaultKeyPair);
     }
 
 
     internal ZkTreeVerifierContainer.ZkTreeVerifierStub GetZkWasmVerifierTester(ECKeyPair keyPair)
     {
-        return GetTester<ZkWasmVerifierContainer.ZkWasmVerifierStub>(ZkWasmVerifierContractAddress,
+        return GetTester<ZkTreeVerifierContainer.ZkTreeVerifierStub>(ZkTreeVerifierContractAddress,
             keyPair);
     }
 
