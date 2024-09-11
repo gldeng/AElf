@@ -1,8 +1,8 @@
-using Bn254.Net;
+using AElf.Types;
 
 namespace ZkWasmVerifier;
 
 public interface IAggregatorVerifierCoreStep
 {
-    UInt256[] VerifyProof(UInt256[] transcript, UInt256[] aux, UInt256[] buf);
+    BigIntValue[] VerifyProof(BigIntValue[] transcript, BigIntValue[] aux, BigIntValue[] buf);
 }

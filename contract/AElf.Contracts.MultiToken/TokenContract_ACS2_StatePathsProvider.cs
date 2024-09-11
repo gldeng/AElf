@@ -44,8 +44,6 @@ public partial class TokenContract
                 {
                     WritePaths =
                     {
-                        GetPath(nameof(TokenContractState.Allowances), args.From.ToString(), txn.From.ToString(),
-                            args.Symbol),
                         GetPath(nameof(TokenContractState.Balances), args.From.ToString(), args.Symbol),
                         GetPath(nameof(TokenContractState.Balances), args.To.ToString(), args.Symbol),
                         GetPath(nameof(TokenContractState.LockWhiteLists), args.Symbol, txn.From.ToString())
@@ -57,7 +55,7 @@ public partial class TokenContract
                         GetPath(nameof(TokenContractState.TransactionFeeFreeAllowancesSymbolList))
                     }
                 };
-
+                AddPathForAllowance(resourceInfo, args.From.ToString(), txn.From.ToString(), args.Symbol);
                 AddPathForTransactionFee(resourceInfo, txn.From.ToString(), txn.MethodName);
                 AddPathForDelegatees(resourceInfo, txn.From, txn.To, txn.MethodName);
                 AddPathForTransactionFeeFreeAllowance(resourceInfo, txn.From);
@@ -70,6 +68,18 @@ public partial class TokenContract
         }
     }
 
+    private void AddPathForAllowance(ResourceInfo resourceInfo, string from, string spender, string symbol)
+    {
+        resourceInfo.WritePaths.Add(GetPath(nameof(TokenContractState.Allowances), from, spender, symbol));
+        resourceInfo.WritePaths.Add(GetPath(nameof(TokenContractState.Allowances), from, spender,
+            GetAllSymbolIdentifier()));
+        var symbolType = GetSymbolType(symbol);
+        if (symbolType == SymbolType.Nft || symbolType == SymbolType.NftCollection)
+        {
+            resourceInfo.WritePaths.Add(GetPath(nameof(TokenContractState.Allowances), from, spender,
+                GetNftCollectionAllSymbolIdentifier(symbol)));
+        }
+    }
 
     private void AddPathForTransactionFee(ResourceInfo resourceInfo, string from, string methodName)
     {
@@ -108,7 +118,7 @@ public partial class TokenContract
         if (delegateeList.Count <= 0) return;
         var secondDelegateeList = new List<string>();
         //get and add second-level delegatee list
-        foreach (var delegateeAddress in delegateeList.Select(Address.FromBase58))
+        foreach (var delegateeAddress in delegateeList.Select(a => Address.FromBase58(a)))
         {
             //delegatee of the first-level delegate is delegator of the second-level delegate
             secondDelegateeList.AddRange(GetDelegateeList(delegateeAddress, to, methodName));
