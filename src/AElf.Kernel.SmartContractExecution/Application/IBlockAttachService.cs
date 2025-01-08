@@ -3,9 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElf.Kernel.Blockchain.Application;
 using AElf.Kernel.Blockchain.Domain;
+using AElf.Kernel.Blockchain.Events;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.EventBus.Local;
 
 namespace AElf.Kernel.SmartContractExecution.Application;
 
@@ -21,6 +23,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
     private readonly IBlockExecutionResultProcessingService _blockExecutionResultProcessingService;
     private readonly IChainBlockLinkService _chainBlockLinkService;
 
+    public ILocalEventBus LocalEventBus { get; set; }
     public BlockAttachService(IBlockchainService blockchainService,
         IBlockchainExecutingService blockchainExecutingService,
         IChainBlockLinkService chainBlockLinkService,
@@ -30,6 +33,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         _blockchainExecutingService = blockchainExecutingService;
         _chainBlockLinkService = chainBlockLinkService;
         _blockExecutionResultProcessingService = blockExecutionResultProcessingService;
+        LocalEventBus = NullLocalEventBus.Instance;
 
         Logger = NullLogger<BlockAttachService>.Instance;
     }
@@ -65,6 +69,7 @@ public class BlockAttachService : IBlockAttachService, ITransientDependency
         finally
         {
             await _blockExecutionResultProcessingService.ProcessBlockExecutionResultAsync(chain, executionResult);
+            await LocalEventBus.PublishAsync(new BlockAttachedEvent() { });
         }
     }
 }
